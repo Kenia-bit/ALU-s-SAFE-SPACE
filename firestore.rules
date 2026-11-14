@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function verifiedEmail() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    function userProfilePath(userId) {
+      return /databases/$(database)/documents/users/$(userId);
+    }
+
+    function isApprovedStaff() {
+      return signedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('.*@alustaff[.]com$')
+        && exists(userProfilePath(request.auth.uid))
+        && get(userProfilePath(request.auth.uid)).data.role == 'staff';
+    }
+
+    function isStudent() {
+      return verifiedEmail()
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('.*@alustudent[.]com$')
+        && exists(userProfilePath(request.auth.uid))
+        && get(userProfilePath(request.auth.uid)).data.role == 'student';
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasAll([
+          'name', 'email', 'role', 'createdAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name', 'email', 'role', 'createdAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && (
+          (
+            request.auth.token.email_verified == true
+            && request.auth.token.email.matches('.*@alustudent[.]com$')
+            && request.resource.data.role == 'student'
+          )
+          ||
+          (
+            request.auth.token.email.matches('.*@alustaff[.]com$')
+            && request.resource.data.role == 'pending'
+          )
+        );
+
+      allow update: if verifiedEmail()
+        && request.auth.uid == userId
+        && request.resource.data.email == resource.data.email
+        && (
+          (
+            request.resource.data.role == resource.data.role
+            && request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['name'])
+            && request.resource.data.name is string
+          )
+          ||
+          (
+            request.auth.token.email.matches('.*@alustudent[.]com$')
+            && resource.data.role == 'pending'
+            && request.resource.data.role == 'student'
+            && request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(['role'])
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow create: if isStudent()
+        && request.resource.data.keys().hasAll([
+          'title', 'category', 'location', 'description', 'imageUrl',
+          'reporterUid', 'reporterEmail', 'reporterName', 'status', 'createdAt',
+          'archivedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'title', 'category', 'location', 'description', 'imageUrl',
+          'reporterUid', 'reporterEmail', 'reporterName', 'status', 'createdAt',
+          'archivedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.category is string
+        && request.resource.data.location is string
+        && request.resource.data.description is string
+        && (
+          request.resource.data.imageUrl == null
+          || request.resource.data.imageUrl is string
+        )
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.reporterEmail == request.auth.token.email
+        && request.resource.data.status == 'Waiting'
+        && request.resource.data.archivedAt == null
+        && request.resource.data.createdAt == request.time;
+
+      allow read: if isApprovedStaff()
+        || (isStudent() && resource.data.reporterUid == request.auth.uid);
+
+      allow update: if isApprovedStaff()
+        && request.resource.data.diff(resource.data)
+          .affectedKeys().hasOnly([
+            'status', 'statusUpdatedAt', 'archivedAt'
+          ])
+        && request.resource.data.status in [
+          'Waiting', 'In Progress', 'Completed'
+        ]
+        && (
+          !('archivedAt' in resource.data)
+          || resource.data.archivedAt == null
+          || request.resource.data.archivedAt == null
+          || request.resource.data.status == 'Completed'
+        )
+        && (
+          !request.resource.data.diff(resource.data)
+            .affectedKeys().hasAny(['status', 'statusUpdatedAt'])
+          || request.resource.data.statusUpdatedAt == request.time
+        )
+        && (
+          !request.resource.data.diff(resource.data)
+            .affectedKeys().hasAny(['archivedAt'])
+          || (
+            resource.data.status == 'Completed'
+            && request.resource.data.status == 'Completed'
+            && (
+              request.resource.data.archivedAt == request.time
+              || (
+                request.resource.data.archivedAt == null
+                && resource.data.archivedAt is timestamp
+              )
+            )
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    match /notifications/{notificationsId} {
+      allow read: if signedIn();
+      allow create, update: if isApprovedStaff() || isStudent();
+      allow delete: if false;
+    }
+  }
+}

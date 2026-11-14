@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "985082343610",
+    "project_id": "campus-incident-reportin-b8ff0",
+    "storage_bucket": "campus-incident-reportin-b8ff0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985082343610:android:8ee6426938fbf15dd05283",
+        "android_client_info": {
+          "package_name": "com.example.campus_incident_reporting_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "985082343610-a9kqthgc9aafdhm7qemv25jjq9ktb33v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.campus_incident_reporting_app",
+            "certificate_hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+          }
+        },
+        {
+          "client_id": "985082343610-9j05ct1hujdc21go9gal72lpspiirm57.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyj1U8erxjm4lF7agg6XkCNZyEdCh_lgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "985082343610-9j05ct1hujdc21go9gal72lpspiirm57.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "985082343610-933nqtj27khmhf5p4lp9cp8kpi9hm9fj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.campusIncidentReportingApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

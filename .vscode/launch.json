@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "campus_incident_reporting_app",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define=SUPABASE_URL=https://bcdevhhkavpyyatkjobu.supabase.co",
+        "--dart-define=SUPABASE_URL=https://supabase.co",
+      ]
+    }
+  ]
+}
